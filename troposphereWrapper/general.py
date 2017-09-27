@@ -21,7 +21,8 @@ class ParameterBuilder:
   
   def build(self) -> Parameter:
     checkForNoneValues(self)
-    return Parameter(self._name
+    return Parameter(
+        self._name
       , Description = self._description
       , Type = self._type
       )

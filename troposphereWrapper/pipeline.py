@@ -35,7 +35,6 @@ class PipelineBuilder:
 
   def build(self) -> Pipeline:
     checkForNoneValues(self)
-    #TODO: check if the stageName is in the pipeline stages
     return Pipeline( 
         self._name
       , RoleArn = self._codePipelineServiceRole
@@ -101,7 +100,9 @@ class CodePipelineStageBuilder:
 
   def build(self):
     checkForNoneValues(self)
-    return Stages( Name = self._name, Actions = self._actions)
+    return Stages( Name = Sub(self._name + "-${AWS::StackName}")
+                 , Actions = self._actions
+                 )
 
 
 
@@ -140,7 +141,7 @@ class CodePipelineActionBuilder:
 
   def build(self) -> Actions:
       checkForNoneValues(self)
-      return Actions( Name = self._name
+      return Actions( Name = Sub(self._name + "-${AWS::StackName}")
                     , ActionTypeId = self._actionType
                     , OutputArtifacts = self._output
                     , InputArtifacts = self._input
@@ -194,9 +195,6 @@ class CodePipelineActionTypeIdBuilder:
                        , Version = self._version
                        , Provider = self._provider
                        )
-
-
-
 
 # example
 def exampleSourceStage(repo: str, branch: str) -> Stages:
