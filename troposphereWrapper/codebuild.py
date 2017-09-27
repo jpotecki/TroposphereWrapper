@@ -2,7 +2,7 @@ from .helpers import checkForNoneValues
 import troposphere.codebuild as cb
 from troposphere import Sub, Template
 
-class CodeBuildBuilder():
+class CodeBuildBuilder:
   def __init__(self):
     self._env = None
     self._source = None
@@ -40,7 +40,7 @@ class CodeBuildBuilder():
                      , ServiceRole = self._serviceRole
                      )
 
-class CodeBuildEnvBuilder():
+class CodeBuildEnvBuilder:
   def __init__(self):
     self._compType = None
     self._image = None
@@ -70,7 +70,7 @@ class CodeBuildEnvBuilder():
                          , EnvironmentVariables = self._envVars
                          )
 
-class CodeBuildSourceBuilder():
+class CodeBuildSourceBuilder:
   def __init__(self):
     self._type = None
     self._buildSpec = None
@@ -88,7 +88,7 @@ class CodeBuildSourceBuilder():
                     , BuildSpec = self._buildSpec
                     )
 
-class CodeBuildArtifactsBuilder():
+class CodeBuildArtifactsBuilder:
   def __init__(self):
     self._type = None
 
