@@ -1,28 +1,28 @@
 from .helpers import checkForNoneValues
-import troposphere.codebuild as cb
+from troposphere.codebuild import Source, Environment, Artifacts, Project
 from troposphere import Sub, Template
 
 class CodeBuildBuilder:
   def __init__(self):
-    self._env = None
-    self._source = None
-    self._artifacts = None
-    self._name = None
-    self._serviceRole = None
+    self._env: Environment = None
+    self._source: Source = None
+    self._artifacts: Artifacts = None
+    self._name: str = None
+    self._serviceRole: str = None
 
-  def setEnvironment(self, env):
+  def setEnvironment(self, env: Environment):
     self._env = env
     return self
   
-  def setSource(self, source):
+  def setSource(self, source: Source):
     self._source = source
     return self
   
-  def setArtifacts(self, artifacts):
+  def setArtifacts(self, artifacts: Artifacts):
     self._artifacts = artifacts
     return self
   
-  def setName(self, name):
+  def setName(self, name: str):
     self._name = name
     return self
   
@@ -30,77 +30,77 @@ class CodeBuildBuilder:
     self._serviceRole = serviceRole
     return self
   
-  def build(self):
+  def build(self) -> Project:
     checkForNoneValues(self)
-    return cb.Project( self._name
-                     , Name = Sub(self._name + "-${AWS::StackName}")
-                     , Environment = self._env
-                     , Source = self._source
-                     , Artifacts = self._artifacts
-                     , ServiceRole = self._serviceRole
-                     )
+    return Project( self._name
+                  , Name = Sub(self._name + "-${AWS::StackName}")
+                  , Environment = self._env
+                  , Source = self._source
+                  , Artifacts = self._artifacts
+                  , ServiceRole = self._serviceRole
+                  )
 
 class CodeBuildEnvBuilder:
   def __init__(self):
-    self._compType = None
-    self._image = None
-    self._type = None
-    self._envVars = []
+    self._compType: str = None
+    self._image: str = None
+    self._type: str = None
+    self._envVars: list = []
   
-  def setComputeType(self, compType):
+  def setComputeType(self, compType: str):
     self._compType = compType
     return self
   
-  def setImage(self, image):
+  def setImage(self, image: str):
     self._image = image
     return self
 
-  def setType(self, type):
+  def setType(self, type: str):
     self._type = type
     return self
 
-  def addEnvVars(self, envVars):
+  def addEnvVars(self, envVars: dict):
     self._envVars.append(envVars)
     return self
   
-  def build(self):
+  def build(self) -> Environment:
     checkForNoneValues(self)
-    return cb.Environment( ComputeType = self._compType
-                         , Image = self._image
-                         , Type = self._type
-                         , EnvironmentVariables = self._envVars
-                         )
+    return Environment( ComputeType = self._compType
+                      , Image = self._image
+                      , Type = self._type
+                      , EnvironmentVariables = self._envVars
+                      )
 
 class CodeBuildSourceBuilder:
   def __init__(self):
-    self._type = None
-    self._buildSpec = None
+    self._type: str = None
+    self._buildSpec: str = None
 
-  def setType(self, type):
+  def setType(self, type: str):
     self._type = type
     return self
 
-  def setBuildSpec(self, buildSpec):
+  def setBuildSpec(self, buildSpec: str):
     self._buildSpec = buildSpec
     return self
 
-  def build(self):
+  def build(self) -> Source:
     checkForNoneValues(self)
-    return cb.Source( Type = self._type
-                    , BuildSpec = self._buildSpec
-                    )
+    return Source( Type = self._type
+                 , BuildSpec = self._buildSpec
+                 )
 
 class CodeBuildArtifactsBuilder:
   def __init__(self):
-    self._type = None
+    self._type: str = None
 
-  def setType(self, type):
+  def setType(self, type: str):
     self._type = type
     return self
 
-  def build(self):
+  def build(self) -> Artifacts:
     checkForNoneValues(self)
-    return cb.Artifacts( Type = self._type )
+    return Artifacts( Type = self._type )
 
 
 # examples
@@ -115,7 +115,7 @@ def exampleCodeSpec():
            "\t" "files:\n" \
            "\t\t" "- index.html"
 
-def getExample():
+def getExample() -> str:
 
   name = "ExampleElmAppBuilder"
 
