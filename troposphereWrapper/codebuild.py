@@ -1,6 +1,23 @@
 from .helpers import checkForNoneValues
 from troposphere.codebuild import Source, Environment, Artifacts, Project
 from troposphere import Sub, Template
+from enum import Enum
+
+class CBArtifactType(Enum):
+  CodePipeline  = (1, 'CODEPIPELINE')
+  NoArtifacts   = (2, 'NO_ARTIFACTS')
+  S3            = (3, 'S3')
+  def __str__(self):
+        return self.value[1]
+
+class CBSourceType(Enum):
+  CodePipeline  = (1, 'CODEPIPELINE')
+  CodeCommit    = (2, 'CODECOMMIT')
+  GitHub        = (3, 'GITHUB')
+  S3            = (4, 'S3')
+  def __str__(self):
+        return self.value[1]
+
 
 class CodeBuildBuilder:
   def __init__(self):
@@ -76,8 +93,8 @@ class CodeBuildSourceBuilder:
     self._type: str = None
     self._buildSpec: str = None
 
-  def setType(self, type: str):
-    self._type = type
+  def setType(self, type: CBSourceType):
+    self._type = str(type)
     return self
 
   def setBuildSpec(self, buildSpec: str):
@@ -94,8 +111,8 @@ class CodeBuildArtifactsBuilder:
   def __init__(self):
     self._type: str = None
 
-  def setType(self, type: str):
-    self._type = type.upper()
+  def setType(self, type: CBArtifactType):
+    self._type = str(type)
     return self
 
   def build(self) -> Artifacts:
@@ -127,12 +144,12 @@ def getExample() -> str:
       .build()
 
   source = CodeBuildSourceBuilder() \
-      .setType("CodePipeline") \
+      .setType(CBSourceType.CodePipeline) \
       .setBuildSpec(exampleCodeSpec()) \
       .build()
 
   artifacts = CodeBuildArtifactsBuilder() \
-      .setType("CodePipeline") \
+      .setType(CBArtifactType.CodePipeline) \
       .build()
   
   codeBuild = CodeBuildBuilder() \
