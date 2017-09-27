@@ -26,7 +26,7 @@ class CodeBuildBuilder:
     self._name = name
     return self
   
-  def setServiceRole(self, serviceRole):
+  def setServiceRole(self, serviceRole: str):
     self._serviceRole = serviceRole
     return self
   
@@ -64,6 +64,7 @@ class CodeBuildEnvBuilder:
     return self
   
   def build(self):
+    checkForNoneValues(self)
     return cb.Environment( ComputeType = self._compType
                          , Image = self._image
                          , Type = self._type
@@ -84,6 +85,7 @@ class CodeBuildSourceBuilder:
     return self
 
   def build(self):
+    checkForNoneValues(self)
     return cb.Source( Type = self._type
                     , BuildSpec = self._buildSpec
                     )
@@ -97,6 +99,7 @@ class CodeBuildArtifactsBuilder:
     return self
 
   def build(self):
+    checkForNoneValues(self)
     return cb.Artifacts( Type = self._type )
 
 
@@ -112,33 +115,35 @@ def exampleCodeSpec():
            "\t" "files:\n" \
            "\t\t" "- index.html"
 
-if __name__ == "__main__":
+def getExample():
 
   name = "ExampleElmAppBuilder"
 
   env = CodeBuildEnvBuilder() \
-        .setComputeType("BUILD_GENERAL1_SMALL") \
-        .setImage("emmanuelrosa/elm-base") \
-        .setType("LINUX_CONTAINER") \
-        .addEnvVars( { "Name": "APP_NAME", "Value": name } ) \
-        .build()
+      .setComputeType("BUILD_GENERAL1_SMALL") \
+      .setImage("emmanuelrosa/elm-base") \
+      .setType("LINUX_CONTAINER") \
+      .addEnvVars( { "Name": "APP_NAME", "Value": name } ) \
+      .build()
 
   source = CodeBuildSourceBuilder() \
-            .setType("CODEPIPELINE") \
-            .setBuildSpec(exampleCodeSpec()) \
-            .build()
+      .setType("CODEPIPELINE") \
+      .setBuildSpec(exampleCodeSpec()) \
+      .build()
 
   artifacts = CodeBuildArtifactsBuilder() \
-            .setType("CODEPIPELINE") \
-            .build()
+      .setType("CODEPIPELINE") \
+      .build()
   
   codeBuild = CodeBuildBuilder() \
-          .setArtifacts(artifacts) \
-          .setEnvironment(env) \
-          .setSource(source) \
-          .setName(name) \
-          .setServiceRole("arn::blabla") \
-          .build()
+      .setArtifacts(artifacts) \
+      .setEnvironment(env) \
+      .setSource(source) \
+      .setName(name) \
+      .setServiceRole("arn::blabla") \
+      .build()
+  
   t = Template()
   t.add_resource(codeBuild)
-  print(t.to_json())
+
+  return t.to_json()
