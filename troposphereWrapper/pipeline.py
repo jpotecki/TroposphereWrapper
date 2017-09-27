@@ -45,6 +45,7 @@ class PipelineBuilder:
               ]
     )
 
+<<<<<<< HEAD
 
 
 class CodePipelineStageBuilder:
@@ -176,6 +177,7 @@ def exampleSourceStage(repo, branch):
       .setName("ExampleSourceStage") \
       .addAction(action) \
       .build()
+
 
 if __name__ == "__main__":
   pipeline = PipelineBuilder() \
