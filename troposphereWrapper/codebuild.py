@@ -95,7 +95,7 @@ class CodeBuildArtifactsBuilder:
     self._type: str = None
 
   def setType(self, type: str):
-    self._type = type
+    self._type = type.upper()
     return self
 
   def build(self) -> Artifacts:
@@ -127,12 +127,12 @@ def getExample() -> str:
       .build()
 
   source = CodeBuildSourceBuilder() \
-      .setType("CODEPIPELINE") \
+      .setType("CodePipeline") \
       .setBuildSpec(exampleCodeSpec()) \
       .build()
 
   artifacts = CodeBuildArtifactsBuilder() \
-      .setType("CODEPIPELINE") \
+      .setType("CodePipeline") \
       .build()
   
   codeBuild = CodeBuildBuilder() \

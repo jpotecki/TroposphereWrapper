@@ -70,7 +70,7 @@ class CodePipelineArtifactStore:
     self._location: str = None
 
   def setS3Bucket(self, s3bucket: s3.Bucket):
-    self.setType("s3").setLocation(Ref(s3bucket))
+    self.setType("S3").setLocation(Ref(s3bucket))
     return self
 
   def setType(self, type: str):
