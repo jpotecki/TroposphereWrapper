@@ -1,5 +1,6 @@
 from .helpers import checkForNoneValues
-from troposphere import Parameter, Ref, Template, Sub
+from troposphere import Parameter, Ref, Template, Sub, GetAtt
+from troposphere.iam import Role
 import troposphere.s3 as s3
 from troposphere.codepipeline import (
   Pipeline, Stages, Actions, ActionTypeID, OutputArtifacts, InputArtifacts,
@@ -10,7 +11,7 @@ class PipelineBuilder:
     self._name: str = None
     self._stages: list = []
     self._artStorage: ArtifactStore = None
-    self._codePipelineServiceRole: str = None
+    self._codePipelineServiceRole: Role = None
     self._disableInboundStageTransitions: list = []
   
   def addDisableInboundStageTrans(self, dist: DisableInboundStageTransitions):
@@ -25,7 +26,7 @@ class PipelineBuilder:
     self._artStorage = store
     return self
   
-  def setCodePipelineServiceRole(self, role: str):
+  def setCodePipelineServiceRole(self, role: Role):
     self._codePipelineServiceRole = role
     return self
 
@@ -37,7 +38,7 @@ class PipelineBuilder:
     checkForNoneValues(self)
     return Pipeline( 
         self._name
-      , RoleArn = self._codePipelineServiceRole
+      , RoleArn = GetAtt(self._codePipelineServiceRole, "Arn")
       , Stages = self._stages
       , ArtifactStore = self._artStorage
       , DisableInboundStageTransitions = self._disableInboundStageTransitions
