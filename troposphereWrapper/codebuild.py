@@ -1,7 +1,10 @@
 from .helpers import checkForNoneValues
 from troposphere.codebuild import Source, Environment, Artifacts, Project
 from troposphere import Sub, Template
+
 from enum import Enum
+from .helpers import checkForNoneValues
+
 
 class CBArtifactType(Enum):
   CodePipeline  = (1, 'CODEPIPELINE')

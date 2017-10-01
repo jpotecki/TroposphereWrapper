@@ -1,8 +1,11 @@
-from troposphere import Template, Ref, Sub
+from troposphere import Template, Ref, Sub, Join
 from troposphere.iam import Role, InstanceProfile, Policy
+from troposphere.s3 import BucketPolicy, Bucket
+
 
 import awacs.aws
 import awacs.s3
+import awacs.codepipeline
 import awacs.codecommit
 import awacs.codedeploy
 import awacs.codebuild
@@ -17,6 +20,7 @@ import awacs.rds
 import awacs.sqs
 import awacs.sts
 import awacs.ecs
+import awacs.logs
 import awacs.iam
 import awacs.awslambda
 import awacs.opsworks
@@ -71,9 +75,11 @@ class StatementBuilder:
     self._principal: awacs.aws.Principal = None
     self._actions: List[ awacs.aws.Action] = []
     self._effect: Effects = None
-    self._resource: List[str] = []
+    self._resource: List[str] = None
 
   def addResource(self, res: str):
+    if self._resource is None:
+      self._resource = []
     self._resource.append(res)
     return self
 
@@ -90,18 +96,26 @@ class StatementBuilder:
     return self
 
   def build(self) -> awacs.aws.Statement:
-    if self._principal is not None:
+    if self._principal is not None and self._resource is None:
       return awacs.aws.Statement(
           Principal = self._principal
         , Action = self._actions
         , Effect = self._effect.get()
         )
-    else:
+    elif self._resource is not None and self._principal is None:
       return awacs.aws.Statement(
           Action = self._actions
         , Effect = self._effect.get()
         , Resource = self._resource
         )
+    else:
+       return awacs.aws.Statement(
+          Action = self._actions
+        , Effect = self._effect.get()
+        , Resource = self._resource
+        , Principal = self._principal
+        )
+
 
 
 
@@ -144,6 +158,66 @@ class PolicyDocumentBuilder:
 
 
 class RoleBuilderHelper:
+  def bucketPolicy(self, bucket: Bucket, pol: awacs.aws.Policy) -> BucketPolicy:
+    return BucketPolicy( "PublicBucketPolicy"
+                       , Bucket = Ref(bucket)
+                       , PolicyDocument = pol
+                       )
+
+  def publicReadForS3Buckets(self, bucket):
+    policy = PolicyDocumentBuilder() \
+      .addStatement( StatementBuilder() \
+          .addResource(Join("", [ "arn:aws:s3:::", Ref(bucket), "/*"])) \
+          .setEffect(Effects.Allow) \
+          .setPrincipal(awacs.aws.Principal(awacs.aws.Everybody)) \
+          .addAction(awacs.s3.GetObject) \
+          .build()
+        ) \
+        .build()
+    return self.bucketPolicy(bucket, policy)
+
+  def oneClickCreateLogsPolicy(self) -> awacs.aws.Policy:
+    return PolicyBuilder() \
+      .setName("OneClickCreateLogsPolicy") \
+      .addStatement(
+        StatementBuilder() \
+          .setEffect(Effects.Allow) \
+          .addAction( awacs.logs.CreateLogGroup) \
+          .addAction( awacs.logs.CreateLogStream) \
+          .addAction( awacs.logs.PutLogEvents ) \
+          .addResource("arn:aws:logs:*:*:*") \
+          .build()
+        ) \
+        .build()
+
+  def s3FullAccessPolicy(self) -> awacs.aws.Policy:
+    return PolicyBuilder() \
+      .setName("S3FullAccessPolicy") \
+      .addStatement(
+        StatementBuilder() \
+          .setEffect(Effects.Allow) \
+          .addAction(awacs.s3.Action("*")) \
+          .addResource("*") \
+          .build()
+          ) \
+        .build()
+
+  def awsCodePipelineCustomActionAccess(self) -> awacs.aws.Policy:
+    return PolicyBuilder() \
+      .setName("AWSCodePipelineCustomActionAccess") \
+      .addStatement(
+        StatementBuilder() \
+          .setEffect(Effects.Allow) \
+          .addAction( awacs.codepipeline.AcknowledgeJob ) \
+          .addAction( awacs.codepipeline.GetJobDetails ) \
+          .addAction( awacs.codepipeline.PollForJobs ) \
+          .addAction( awacs.codepipeline.PutJobFailureResult ) \
+          .addAction( awacs.codepipeline.PutJobSuccessResult ) \
+          .addResource("*") \
+          .build()
+        ) \
+        .build()
+
   def defaultAssumeRolePolicyDocument(self, service: str) -> awacs.aws.Policy:
     return PolicyDocumentBuilder() \
       .addStatement(
@@ -154,14 +228,6 @@ class RoleBuilderHelper:
           .build()
         ) \
       .build()
-    # return awacs.aws.Policy(
-    #   Statement = [ awacs.aws.Statement( 
-    #         Principal = awacs.aws.Principal("Service", service)
-    #       , Action = [ awacs.sts.AssumeRole]
-    #       , Effect = awacs.aws.Allow
-    #       )
-    #     ]
-    #   )
 
   def oneClickCodePipeServicePolicy(self) -> Policy:
     statements = [
