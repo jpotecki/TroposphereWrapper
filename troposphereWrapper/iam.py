@@ -159,7 +159,7 @@ class PolicyDocumentBuilder:
 
 class RoleBuilderHelper:
   def bucketPolicy(self, bucket: Bucket, pol: awacs.aws.Policy) -> BucketPolicy:
-    return BucketPolicy( "PublicBucketPolicy"
+    return BucketPolicy( bucket.title + "BucketPolicy"
                        , Bucket = Ref(bucket)
                        , PolicyDocument = pol
                        )

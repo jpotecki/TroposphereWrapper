@@ -6,6 +6,8 @@ from troposphere.codepipeline import (
   Pipeline, Stages, Actions, ActionTypeID, OutputArtifacts, InputArtifacts,
   ArtifactStore, DisableInboundStageTransitions)
 
+from enum import Enum
+
 class PipelineBuilder:
   def __init__(self):
     self._name: str = None
@@ -43,6 +45,8 @@ class PipelineBuilder:
       , ArtifactStore = self._artStorage
       , DisableInboundStageTransitions = self._disableInboundStageTransitions
       )
+
+
 
 class CodePipelineDISTBuilder:
   def __init__(self):
@@ -88,20 +92,20 @@ class CodePipelineArtifactStore:
 
 class CodePipelineStageBuilder:
   def __init__(self):
-    self._name = None
-    self._actions = []
+    self._name: str = None
+    self._actions: List[Actions] = []
   
-  def setName(self, name):
+  def setName(self, name: str):
     self._name = name
     return self
 
-  def addAction(self, action):
+  def addAction(self, action: Actions):
     self._actions.append(action)
     return self
 
-  def build(self):
+  def build(self) -> Stages:
     checkForNoneValues(self)
-    return Stages( Name = Sub(self._name + "-${AWS::StackName}")
+    return Stages( Name = self._name
                  , Actions = self._actions
                  )
 
@@ -152,18 +156,35 @@ class CodePipelineActionBuilder:
 
 
 
+class ActionIdOwner(Enum):
+  AWS = (0, "AWS")
+  ThirdParty = (1, "ThirdParty")
+  Custom = (2, "Custom")
+  def __str__(self):
+    return self.value[1]
+
+class ActionIdCategory(Enum):
+  Invoke = (0, "Invoke")  
+  Source = (1, "Source")
+  Approval = (2, "Approval")
+  Build = (3, "Build")
+  Deploy = (4, "Deploy")
+  Test = (5, "Test")
+  def __str__(self):
+    return self.value[1]
+
 class CodePipelineActionTypeIdBuilder:
   def __init__(self):
-    self._category: str = None
-    self._owner: str = None
-    self._version: str = None
+    self._category: ActionIdCategory = None
+    self._owner: ActionIdOwner = None
+    self._version: str = "1"
     self._provider: str = None
 
-  def setCategory(self, cat: str):
+  def setCategory(self, cat: ActionIdCategory):
     self._category = cat
     return self
 
-  def setOwner(self, owner: str):
+  def setOwner(self, owner: ActionIdOwner):
     self._owner = owner
     return self
 
@@ -176,26 +197,58 @@ class CodePipelineActionTypeIdBuilder:
     return self
 
   def setCodeCommitSource(self, version: str):
-    self.setCategory("Source") \
-        .setOwner("AWS") \
+    self.setCategory(ActionIdCategory.Source) \
+        .setOwner(ActionIdOwner.AWS) \
         .setVersion(version) \
         .setProvider("CodeCommit")
     return self
 
   def setCodeBuildSource(self, version: str):
-    self.setCategory("Build") \
-        .setOwner("AWS") \
+    self.setCategory(ActionIdCategory.Build) \
+        .setOwner(ActionIdOwner.AWS) \
         .setVersion(version) \
         .setProvider("CodeBuild")
     return self
 
   def build(self) -> ActionTypeID:
     checkForNoneValues(self)
-    return ActionTypeID( Category = self._category
-                       , Owner = self._owner
+    return ActionTypeID( Category = str(self._category)
+                       , Owner = str(self._owner)
                        , Version = self._version
                        , Provider = self._provider
                        )
+
+
+class StageBuilderHelper:
+  def _getStageNameWithoutStackNameRef(self, stage: Stages)-> str:
+    name = stage.Name
+    name = name.replace("-${AWS::StackName}", "")
+    return name[0].upper() + name[1:]
+
+  def getManualApprovalStageNoNotification( self
+                                          , stage: Stages
+                                          , version: str = "1"
+                                          ) -> Stages:
+    actionId = CodePipelineActionTypeIdBuilder() \
+      .setCategory(ActionIdCategory.Approval) \
+      .setOwner(ActionIdOwner.AWS) \
+      .setVersion(version) \
+      .setProvider("Manual") \
+      .build()
+    
+    name = stage.Name
+    action = CodePipelineActionBuilder() \
+      .setActionType(actionId) \
+      .setName("ManualApprovalActionFor" + name) \
+      .build()
+
+    return CodePipelineStageBuilder() \
+      .setName(name + "-Approval") \
+      .addAction(action) \
+      .build()
+
+
+
 
 # example
 def exampleSourceStage(repo: str, branch: str) -> Stages:
