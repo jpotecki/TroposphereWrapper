@@ -33,7 +33,7 @@ class CodeBuildBuilder:
   def setEnvironment(self, env: Environment):
     self._env = env
     return self
-  
+
   def setSource(self, source: Source):
     self._source = source
     return self
@@ -45,7 +45,7 @@ class CodeBuildBuilder:
   def setName(self, name: str):
     self._name = name
     return self
-  
+
   def setServiceRole(self, serviceRole: str):
     self._serviceRole = serviceRole
     return self
@@ -66,7 +66,8 @@ class CodeBuildEnvBuilder:
     self._image: str = None
     self._type: str = None
     self._envVars: list = []
-  
+    self._privilegedMode: bool = False
+
   def setComputeType(self, compType: str):
     self._compType = compType
     return self
@@ -82,13 +83,18 @@ class CodeBuildEnvBuilder:
   def addEnvVars(self, envVars: dict):
     self._envVars.append(envVars)
     return self
-  
+
+  def setPrivilegedMode(self, priv: bool):
+    self._privilegedMode = priv
+    return self
+
   def build(self) -> Environment:
     checkForNoneValues(self)
     return Environment( ComputeType = self._compType
                       , Image = self._image
                       , Type = self._type
                       , EnvironmentVariables = self._envVars
+                      , PrivilegedMode = self._privilegedMode
                       )
 
 class CodeBuildSourceBuilder:
