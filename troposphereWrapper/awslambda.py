@@ -33,7 +33,7 @@ class LambdaBuilder:
     return self
 
   def setSourceCode(self, code: List[str]):
-    self._code = Code( ZipFile = Join("", code) )
+    self._code = Code( ZipFile = Join("\n", code) )
     return self
 
   def setHandler(self, handler: str):
